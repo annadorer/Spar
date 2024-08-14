@@ -8,19 +8,21 @@
 import SwiftUI
 import UISystem
 
+@MainActor
 struct GridCardView: View {
     
-    @State private var selectedAmount: Double = 0.0
+    @State private var selectedAmount: Double
     @State private var selectedUnit: ItemUnit
     @State private var item: Item
-    @State private var onItemCartAdd: (ItemCart) -> Void
-    @State private var onItemCartDelete: (UUID) -> Void
+    private var onItemCartAdd: @MainActor (UUID, ItemUnit, Double) -> Void
+    private var onItemCartDelete: @MainActor (UUID) -> Void
     
-    init(item: Item, onItemCartAdd: @escaping (ItemCart) -> Void, onItemCartDelete: @escaping (UUID) -> Void) {
+    init(item: Item, onItemCartAdd: @escaping @MainActor (UUID, ItemUnit, Double) -> Void, onItemCartDelete: @escaping @MainActor (UUID) -> Void, selectedUnit: SelectedAmount?) {
         self._item = State(initialValue: item)
-        self._onItemCartAdd = State(initialValue: onItemCartAdd)
-        self._onItemCartDelete = State(initialValue: onItemCartDelete)
-        self._selectedUnit = State(initialValue: item.units.first!)
+        self.onItemCartAdd = onItemCartAdd
+        self.onItemCartDelete = onItemCartDelete
+        self._selectedUnit = State(initialValue: selectedUnit?.selectedUnit ?? item.units.first!)
+        _selectedAmount = State(initialValue: selectedUnit?.selectedCount ?? 0.0)
     }
     
     var body: some View {
@@ -76,16 +78,16 @@ struct GridCardView: View {
                 if selectedAmount != 0.0 {
                     QuantitySelectorView(selectedAmount: $selectedAmount, selectedUnit: $selectedUnit, itemAmounts: item.units as! [ItemUnit], basePrice: item.priceWithDiscount,
                                          onPlusClick: {
-                        onItemCartAdd(.init(id: item.id, name: item.name, priceWithDiscount: item.priceWithDiscount, image: item.image, selectedAmount: .init(selectedAmount: selectedAmount, selectedUnit: selectedUnit)))
+                        onItemCartAdd(item.id, selectedUnit, selectedAmount)
                                          },
                                          onMinusClick: {
                                              if (selectedAmount <= 0) {
                                                  onItemCartDelete(item.id)
-                                             }else {
-                                                 onItemCartAdd(.init(id: item.id, name: item.name, priceWithDiscount: item.priceWithDiscount, image: item.image, selectedAmount: .init(selectedAmount: selectedAmount, selectedUnit: selectedUnit)))
+                                             } else {
+                                                 onItemCartAdd(item.id, selectedUnit, selectedAmount)
                                              }
                                          }, onUnitChange: {
-                                             onItemCartAdd(.init(id: item.id, name: item.name, priceWithDiscount: item.priceWithDiscount, image: item.image, selectedAmount: .init(selectedAmount: selectedAmount, selectedUnit: selectedUnit)))
+                                             onItemCartAdd(item.id, selectedUnit, selectedAmount)
                                          })
                     .padding(.horizontal, 4)
                     .padding(.bottom, 6)
@@ -95,7 +97,7 @@ struct GridCardView: View {
                         Spacer()
                         Button(action: {
                             selectedAmount += selectedUnit.addingCoefficient
-                            onItemCartAdd(.init(id: item.id, name: item.name, priceWithDiscount: item.priceWithDiscount, image: item.image, selectedAmount: .init(selectedAmount: selectedAmount, selectedUnit: selectedUnit)))
+                            onItemCartAdd(item.id, selectedUnit, selectedAmount)
                         }) {
                             Image.designIcon.shoppingBasket
                         }
@@ -110,6 +112,6 @@ struct GridCardView: View {
 
 struct GridCardView_Previews: PreviewProvider {
     static var previews: some View {
-        GridCardView(item: .init(name: "сыр Ламбер 500/0 230г", image: "FirstItemImage", price: 199.0, discount: 0.502, units: [.init(unit: "Шт", priceCoefficient: 2.5, addingCoefficient: 1), .init(unit: "Кг", priceCoefficient: 1, addingCoefficient: 0.1)], ratingNumber: "4.1", tag: .init(color: Color.designColor.saleTag, text: "Удар по ценам")), onItemCartAdd: {item in}, onItemCartDelete: {item in})
+        GridCardView(item: .init(name: "сыр Ламбер 500/0 230г", image: "FirstItemImage", price: 199.0, discount: 0.502, units: [.init(unit: "Шт", priceCoefficient: 2.5, addingCoefficient: 1), .init(unit: "Кг", priceCoefficient: 1, addingCoefficient: 0.1)], ratingNumber: "4.1", tag: .init(color: Color.designColor.saleTag, text: "Удар по ценам")), onItemCartAdd: {id,unit,amount in}, onItemCartDelete: {id in}, selectedUnit: nil)
     }
 }

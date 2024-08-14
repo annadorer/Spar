@@ -10,7 +10,11 @@ import UISystem
 
 struct TagView: View {
     
-    var tag: Tag
+    private var tag: Tag
+    
+    init(tag: Tag) {
+        self.tag = tag
+    }
     
     var body: some View {
         Text(tag.text)
@@ -21,27 +25,6 @@ struct TagView: View {
             .cornerRadius(20, corners: [.topLeft, .bottomRight, .topRight])
     }
 }
-
-struct RoundedCorner: Shape {
-    let radius: CGFloat
-    let corners: UIRectCorner
-    
-    init(radius: CGFloat = .infinity, corners: UIRectCorner = .allCorners) {
-        self.radius = radius
-        self.corners = corners
-    }
-    
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
-    }
-} //TODO Также вынести
-
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-} //TODO Вынести в отдельный файл с расширениями
 
 struct TagView_Previews: PreviewProvider {
     static var previews: some View {

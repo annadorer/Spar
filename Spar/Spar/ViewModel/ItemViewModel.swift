@@ -11,8 +11,8 @@ import SwiftUI
 final class ItemsScreenViewModel: ObservableObject {
     
     private var fetchDataService: FetchDataService
-    @Published var addedToCartItems: [Item] = []
-    @Published var selectedItemAmount: [ItemCart] = [] //TODO Переименовать
+    @Published var items: [Item] = []
+    @Published var cartItems: [ItemCart] = []
     
     init(fetchDataService: FetchDataService) {
         self.fetchDataService = fetchDataService
@@ -24,39 +24,46 @@ final class ItemsScreenViewModel: ObservableObject {
     private func fetchData() async throws {
         let fetchedData = await fetchDataService.fetch() as? [Item]
         await MainActor.run {
-            addedToCartItems = fetchedData ?? []
+            items = fetchedData ?? []
         }
     }
     
     func fetchMore(index: Int) {
         Task {
-            if index + 4 >= addedToCartItems.count {
+            if index + 4 >= items.count {
                 let fetchedData = await fetchDataService.fetch() as? [Item]
                 if fetchedData != nil {
                     await MainActor.run {
-                        addedToCartItems.append(contentsOf: fetchedData!)
+                        items.append(contentsOf: fetchedData!)
                     }
                 }
             }
         }
     }
     
-    func addOrUpdateItemToCart(item: ItemCart) {
-        let existItemCartIndex = selectedItemAmount.firstIndex(where: { itemCart in
-            itemCart.id == item.id
-        })
-        if existItemCartIndex != nil {
-            selectedItemAmount.remove(at: existItemCartIndex!)
+    @MainActor
+    func addOrUpdateItemToCart(itemId: UUID, selectedUnit: ItemUnit, selectedCount: Double) {
+        let existItem = items.first(where: { item in
+            item.id == itemId})
+        if existItem == nil {
+            return
         }
-        selectedItemAmount.append(item)
-    }
-    
-    func deleteItemInCart(itemId: UUID) {
-        let existItemCartIndex = selectedItemAmount.firstIndex(where: { itemCart in
+        let existItemCartIndex = cartItems.firstIndex(where: { itemCart in
             itemCart.id == itemId
         })
         if existItemCartIndex != nil {
-            selectedItemAmount.remove(at: existItemCartIndex!)
+            cartItems.remove(at: existItemCartIndex!)
+        }
+        cartItems.append(.init(id: itemId, name: existItem!.name, priceWithDiscount: existItem!.priceWithDiscount, image: existItem!.image, selectedAmount: .init(selectedCount: selectedCount, selectedUnit: .init(unit: selectedUnit.unit, priceCoefficient: selectedUnit.priceCoefficient, addingCoefficient: selectedUnit.addingCoefficient))))
+    }
+    
+    @MainActor
+    func deleteItemInCart(itemId: UUID) {
+        let existItemCartIndex = cartItems.firstIndex(where: { itemCart in
+            itemCart.id == itemId
+        })
+        if existItemCartIndex != nil {
+            cartItems.remove(at: existItemCartIndex!)
         }
     }
 }

@@ -35,14 +35,16 @@ struct PriceWithDiscountView: View {
                 
                 ZStack(alignment: .center) {
                     
-                    Text("₽") //TODO локалайзед
+                    Text(UI.Strings.currency)
                         .font(.priceText())
                         .offset(x: -5, y: -6)
                     Text("\u{0338}")
                         .rotationEffect(.degrees(45))
                         .frame(width: 17)
                         .fontWeight(.bold)
-                    Text("кг") //TODO Подставлять из возможных юнитов где коэф/ будет 1
+                    Text(item.units.first(where: { unit in
+                        unit.priceCoefficient == 1
+                    })!.unit.lowercased())
                         .font(.priceText())
                         .offset(x: 7, y: 8)
                 }

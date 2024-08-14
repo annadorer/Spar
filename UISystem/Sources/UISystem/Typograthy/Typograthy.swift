@@ -37,6 +37,10 @@ public extension Font {
         .custom("CeraRoundPro-Bold", size: size)
     }
     
+    static func cartText(size: CGFloat = 16) -> Font {
+        .custom("CeraRoundPro-Bold", size: size)
+    }
+    
 }
 
 

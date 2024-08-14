@@ -1,0 +1,14 @@
+/* 
+  Localizable.strings
+  Spar
+
+  Created by Anna on 14.08.2024.
+  
+*/
+
+"one_review" = "review";
+"two_reviews" = "reviews";
+"reviews" = "revies";
+"currency" = "$";
+"total" = "Total:";
+"cart" = "Cart";

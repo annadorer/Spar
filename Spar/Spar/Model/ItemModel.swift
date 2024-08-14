@@ -30,14 +30,13 @@ struct Item {
     func reviewString(for number: Int) -> String {
         let cases = [2, 3, 4]
         if number % 10 == 1 && number % 100 != 11 {
-            return "\(number) отзыв"
+            return String(number).appending(UI.Strings.oneReview)
         } else if cases.contains(number % 10) && !(number % 100 >= 12 && number % 100 <= 14) {
-            return "\(number) отзыва" //TODO тоже самое
+            return String(number).appending(UI.Strings.twoReview)
         } else {
-            return "\(number) отзывов" //TODO локалайзед
+            return String(number).appending(UI.Strings.reviews)
         }
     }
-
 }
 
 struct ItemUnit: Hashable {    

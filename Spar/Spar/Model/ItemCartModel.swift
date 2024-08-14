@@ -16,6 +16,6 @@ struct ItemCart {
 }
 
 struct SelectedAmount {
-    var selectedAmount: Double //TODO Переименовать в селектед каунт
+    var selectedCount: Double
     var selectedUnit: ItemUnit
 }

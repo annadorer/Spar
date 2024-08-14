@@ -9,15 +9,16 @@ import SwiftUI
 import UISystem
 
 struct CartScreen: View {
+    
     @State private var items: [ItemCart]
+    
+    private var totalSum: Double {
+        items.reduce(0) { $0 + $1.priceWithDiscount * $1.selectedAmount.selectedUnit.priceCoefficient}
+    }
     
     init(items: [ItemCart]) {
         _items = State(initialValue: items)
     }
-    
-    var totalSum: Double {
-        items.reduce(0) { $0 + $1.priceWithDiscount * $1.selectedAmount.selectedUnit.priceCoefficient}
-    } //TODO Приватное
     
     var body: some View {
         VStack {
@@ -31,9 +32,9 @@ struct CartScreen: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         Spacer()
                         VStack(alignment: .center, spacing: 5) {
-                            Text(String(format: "%.1f", item.selectedAmount.selectedUnit.priceCoefficient == 1.0 ? "%.1f %@" : "%.0f %@", item.selectedAmount.selectedAmount,  item.selectedAmount.selectedUnit.unit).appending(item.selectedAmount.selectedUnit.unit))
+                            Text(String(format: "%.1f", item.selectedAmount.selectedUnit.priceCoefficient == 1.0 ? "%.1f %@" : "%.0f %@", item.selectedAmount.selectedCount,  item.selectedAmount.selectedUnit.unit).appending(item.selectedAmount.selectedUnit.unit))
                                 .font(.priceCents())
-                            Text(String(format: "%.1f", item.priceWithDiscount * item.selectedAmount.selectedUnit.priceCoefficient).appending("₽")) //TODO Локалайзед
+                            Text(String(format: "%.1f", item.priceWithDiscount * item.selectedAmount.selectedUnit.priceCoefficient).appending(UI.Strings.currency))
                                 .font(.priceBig())
                         }
                     }
@@ -43,12 +44,12 @@ struct CartScreen: View {
             .listStyle(.plain)
             
             HStack {
-                Text("Итого:") //TODO Локалайзед
+                Text(UI.Strings.total)
                     .font(.priceBig())
                     .foregroundColor(Color.white)
                     .padding(.horizontal, 10)
                 Spacer()
-                Text(String(format: "%.1f", totalSum).appending("₽")) //TODO Локалайзед
+                Text(String(format: "%.1f", totalSum).appending(UI.Strings.currency))
                     .font(.priceBig())
                     .foregroundColor(Color.white)
                     .padding(.horizontal, 10)
@@ -62,6 +63,6 @@ struct CartScreen: View {
 
 struct CartScreen_Previews: PreviewProvider {
     static var previews: some View {
-        CartScreen(items: [.init(id: UUID(), name: "Салат овощной с крабовыми палочками", priceWithDiscount: 1.0, image: "FirstItemImage", selectedAmount: .init(selectedAmount: 1.5, selectedUnit: .init(unit: "Кг", priceCoefficient: 1.0, addingCoefficient: 1.0)))])
+        CartScreen(items: [.init(id: UUID(), name: "Салат овощной с крабовыми палочками", priceWithDiscount: 1.0, image: "FirstItemImage", selectedAmount: .init(selectedCount: 1.5, selectedUnit: .init(unit: "Кг", priceCoefficient: 1.0, addingCoefficient: 1.0)))])
     }
 }

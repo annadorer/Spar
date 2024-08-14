@@ -12,8 +12,9 @@ import Swinject
 struct ItemsScreen: View {
     
     @State private var isGrid = true
-    private var twoColumnGrid = Array(repeating: GridItem(.flexible(minimum: 168, maximum: 176)), count: 2)
     @StateObject private var viewModel: ItemsScreenViewModel
+    
+    private var twoColumnGrid = Array(repeating: GridItem(.flexible(minimum: 168, maximum: 176)), count: 2)
     
     init() {
         self._viewModel = StateObject(wrappedValue: .init(fetchDataService: Container.fetchDataService))
@@ -24,27 +25,28 @@ struct ItemsScreen: View {
             ScrollView {
                 if isGrid {
                     LazyVGrid(columns: twoColumnGrid, spacing: 10) {
-                        ForEach(Array(viewModel.addedToCartItems.enumerated()), id: \.offset) { index, item in
+                        ForEach(Array(viewModel.items.enumerated()), id: \.offset) { index, item in
                             GridCardView(item: item,
                                          onItemCartAdd: viewModel.addOrUpdateItemToCart,
-                                         onItemCartDelete: viewModel.deleteItemInCart)
-                                .onAppear {
-                                    viewModel.fetchMore(index: index)
-                                }
+                                         onItemCartDelete: viewModel.deleteItemInCart, selectedUnit: viewModel.cartItems.first(where: { cartItem in
+                                cartItem.id == item.id
+                            })?.selectedAmount)
+                            .onAppear {
+                                viewModel.fetchMore(index: index)
+                            }
                         }
                     }
                 } else {
                     LazyVStack() {
-                        ForEach(Array(viewModel.addedToCartItems.enumerated()), id: \.offset) { index, item in
+                        ForEach(Array(viewModel.items.enumerated()), id: \.offset) { index, item in
                             ListCardView(item: item,
-                                         selectedAmount: viewModel.selectedItemAmount.first(where: { ItemCart in
-                                ItemCart.id == item.id
-                            })?.selectedAmount,
                                          onItemCartAdd: viewModel.addOrUpdateItemToCart,
-                                         onItemCartDelete: viewModel.deleteItemInCart)
-                                .onAppear {
-                                    viewModel.fetchMore(index: index)
-                                }
+                                         onItemCartDelete: viewModel.deleteItemInCart, selectedUnit: viewModel.cartItems.first(where: { cartItem in
+                                cartItem.id == item.id
+                            })?.selectedAmount)
+                            .onAppear {
+                                viewModel.fetchMore(index: index)
+                            }
                             Divider()
                                 .frame(height: 1)
                                 .foregroundColor(Color.designColor.divider)
@@ -73,8 +75,13 @@ struct ItemsScreen: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: CartScreen(items: viewModel.selectedItemAmount)) {
-                        Text("Корзина") //TODO Localizedstring
+                    NavigationLink(destination: CartScreen(items: viewModel.cartItems)) {
+                        Text(UI.Strings.cart)
+                            .font(.cartText()).foregroundColor(Color.designColor.button)
+                            .frame(width: 80, height: 40)
+                            .background(Color.designColor.buttonNavigationBlackground)
+                            .cornerRadius(12)
+                        
                     }
                 }
             }
