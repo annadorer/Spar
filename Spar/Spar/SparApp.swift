@@ -17,11 +17,11 @@ struct SparApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ItemsScreen()
+            ItemsScreen(viewModel: ItemsScreenViewModel(fetchDataService: Container.fetchDataService))
         }
     }
     private func registerServices() {
-        Container.shared.register(FetchDataService.self) { _ in
+        Container.shared.register(FetchDataServiceProtocol.self) { _ in
             MockFetchDataService()
         }
     }

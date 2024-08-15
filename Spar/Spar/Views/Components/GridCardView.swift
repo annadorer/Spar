@@ -14,15 +14,18 @@ struct GridCardView: View {
     @State private var selectedAmount: Double
     @State private var selectedUnit: ItemUnit
     @State private var item: Item
-    private var onItemCartAdd: @MainActor (UUID, ItemUnit, Double) -> Void
-    private var onItemCartDelete: @MainActor (UUID) -> Void
+    private let onItemCartAdd: @MainActor (UUID, ItemUnit, Double) -> Void
+    private let onItemCartDelete: @MainActor (UUID) -> Void
     
-    init(item: Item, onItemCartAdd: @escaping @MainActor (UUID, ItemUnit, Double) -> Void, onItemCartDelete: @escaping @MainActor (UUID) -> Void, selectedUnit: SelectedAmount?) {
-        self._item = State(initialValue: item)
+    init(item: Item,
+         onItemCartAdd: @escaping @MainActor (UUID, ItemUnit, Double) -> Void,
+         onItemCartDelete: @escaping @MainActor (UUID) -> Void,
+         selectedUnit: SelectedAmount?) {
+        _item = State(initialValue: item)
+        _selectedUnit = State(initialValue: selectedUnit?.unit ?? item.units.first ?? .pcs)
+        _selectedAmount = State(initialValue: selectedUnit?.count ?? 0.0)
         self.onItemCartAdd = onItemCartAdd
         self.onItemCartDelete = onItemCartDelete
-        self._selectedUnit = State(initialValue: selectedUnit?.selectedUnit ?? item.units.first!)
-        _selectedAmount = State(initialValue: selectedUnit?.selectedCount ?? 0.0)
     }
     
     var body: some View {
@@ -45,9 +48,11 @@ struct GridCardView: View {
                 Text(item.ratingNumber)
                     .font(.caption())
                 Spacer()
-                if (item.discount != nil) {
-                    Text(String(format: "%.2f", item.discount!).replacingOccurrences(of: "0.", with: "").appending("%"))
-                        .foregroundColor(Color.designColor.sale).font(.saleText())
+                
+                if let formattedDiscount = item.formattedDiscount {
+                    Text(formattedDiscount)
+                        .foregroundColor(Color.designColor.sale)
+                        .font(.saleText())
                 }
             }
             .padding([.horizontal, .bottom], 5)
@@ -69,14 +74,18 @@ struct GridCardView: View {
     var bottom: some View {
         VStack(alignment: .leading) {
             Text(item.name)
-                .font(.caption()).foregroundColor(Color.designColor.itemName)
+                .font(.caption())
+                .foregroundColor(Color.designColor.itemName)
                 .padding(.horizontal, 8)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             Group {
-                if selectedAmount != 0.0 {
-                    QuantitySelectorView(selectedAmount: $selectedAmount, selectedUnit: $selectedUnit, itemAmounts: item.units as! [ItemUnit], basePrice: item.priceWithDiscount,
+                if !selectedAmount.isZero {
+                    QuantitySelectorView(selectedAmount: $selectedAmount,
+                                         selectedUnit: $selectedUnit,
+                                         itemAmounts: item.units,
+                                         basePrice: item.priceWithDiscount,
                                          onPlusClick: {
                         onItemCartAdd(item.id, selectedUnit, selectedAmount)
                                          },
@@ -112,6 +121,16 @@ struct GridCardView: View {
 
 struct GridCardView_Previews: PreviewProvider {
     static var previews: some View {
-        GridCardView(item: .init(name: "сыр Ламбер 500/0 230г", image: "FirstItemImage", price: 199.0, discount: 0.502, units: [.init(unit: "Шт", priceCoefficient: 2.5, addingCoefficient: 1), .init(unit: "Кг", priceCoefficient: 1, addingCoefficient: 0.1)], ratingNumber: "4.1", tag: .init(color: Color.designColor.saleTag, text: "Удар по ценам")), onItemCartAdd: {id,unit,amount in}, onItemCartDelete: {id in}, selectedUnit: nil)
+        GridCardView(item:
+                .init(name: "сыр Ламбер 500/0 230г",
+                      image: "FirstItemImage",
+                      price: 199.0,
+                      discount: 0.502,
+                      units: [.pcs, .kg],
+                      ratingNumber: "4.1",
+                      tag: .sale),
+                     onItemCartAdd: { _, _, _ in },
+                     onItemCartDelete: { _ in },
+                     selectedUnit: nil)
     }
 }

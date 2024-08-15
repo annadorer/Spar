@@ -10,17 +10,18 @@ import UISystem
 
 struct TagView: View {
     
-    private var tag: Tag
+    private let tag: Tag
     
     init(tag: Tag) {
         self.tag = tag
     }
     
     var body: some View {
-        Text(tag.text)
+        Text(tag.title)
             .frame(width: 84, height: 16)
             .padding(.leading, 8)
-            .font(.tagText()).foregroundColor(Color.designColor.tagText)
+            .font(.tagText())
+            .foregroundColor(Color.designColor.tagText)
             .background(tag.color)
             .cornerRadius(20, corners: [.topLeft, .bottomRight, .topRight])
     }
@@ -28,6 +29,6 @@ struct TagView: View {
 
 struct TagView_Previews: PreviewProvider {
     static var previews: some View {
-        TagView(tag: .init(color: Color.designColor.saleTag, text: "Удар по ценам"))
+        TagView(tag: .sale)
     }
 }

@@ -10,9 +10,9 @@ import UISystem
 
 struct PriceWithDiscountView: View {
     
-    private var item: Item
-    private var fractionalPart: Double
-    private var wholePart: Double
+    private let item: Item
+    private let fractionalPart: Double
+    private let wholePart: Double
     
     init(item: Item) {
         self.item = item
@@ -38,15 +38,17 @@ struct PriceWithDiscountView: View {
                     Text(UI.Strings.currency)
                         .font(.priceText())
                         .offset(x: -5, y: -6)
+                    
                     Text("\u{0338}")
                         .rotationEffect(.degrees(45))
                         .frame(width: 17)
                         .fontWeight(.bold)
-                    Text(item.units.first(where: { unit in
-                        unit.priceCoefficient == 1
-                    })!.unit.lowercased())
-                        .font(.priceText())
-                        .offset(x: 7, y: 8)
+                    
+                    if let unit = item.units.first(where: { $0.priceCoefficient == 1 }) {
+                        Text(unit.rawValue.lowercased())
+                            .font(.priceText())
+                            .offset(x: 7, y: 8)
+                    }
                 }
                 .offset(x: 5, y: -3)
             }
@@ -62,6 +64,11 @@ struct PriceWithDiscountView: View {
 
 struct PriceWithDiscountView_Previews: PreviewProvider {
     static var previews: some View {
-        PriceWithDiscountView(item: Item(name: "сыр Ламбер 500/0 230г", image: "Image", price: 199.0, discount: 0.502, units: [.init(unit: "Кг", priceCoefficient: 1.0, addingCoefficient: 2.5)], ratingNumber: "4.1"))
+        PriceWithDiscountView(item: .init(name: "сыр Ламбер 500/0 230г",
+                                          image: "Image",
+                                          price: 199.0,
+                                          discount: 0.502,
+                                          units: [.kg],
+                                          ratingNumber: "4.1"))
     }
 }

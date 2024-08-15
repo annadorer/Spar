@@ -14,13 +14,17 @@ struct ListCardView: View {
     @State private var selectedAmount: Double
     @State private var item: Item
     @State private var selectedUnit: ItemUnit
-    private var onItemCartAdd: @MainActor (UUID, ItemUnit, Double) -> Void
-    private var onItemCartDelete: @MainActor (UUID) -> Void
     
-    init(item: Item, onItemCartAdd: @MainActor @escaping (UUID, ItemUnit, Double) -> Void, onItemCartDelete: @MainActor @escaping (UUID) -> Void, selectedUnit: SelectedAmount?) {
-        self._item = State(initialValue: item)
-        self._selectedUnit = State(initialValue: selectedUnit?.selectedUnit ?? item.units.first!)
-        _selectedAmount = State(initialValue: selectedUnit?.selectedCount ?? 0.0)
+    private let onItemCartAdd: @MainActor (UUID, ItemUnit, Double) -> Void
+    private let onItemCartDelete: @MainActor (UUID) -> Void
+    
+    init(item: Item,
+         selectedUnit: SelectedAmount?,
+         onItemCartAdd: @MainActor @escaping (UUID, ItemUnit, Double) -> Void,
+         onItemCartDelete: @MainActor @escaping (UUID) -> Void) {
+        _item = State(initialValue: item)
+        _selectedUnit = State(initialValue: selectedUnit?.unit ?? item.units.first ?? .pcs)
+        _selectedAmount = State(initialValue: selectedUnit?.count ?? 0.0)
         self.onItemCartAdd = onItemCartAdd
         self.onItemCartDelete = onItemCartDelete
     }
@@ -39,9 +43,11 @@ struct ListCardView: View {
             ZStack(alignment: .bottomTrailing) {
                 Image(item.image)
                     .frame(width: 168, height: 168)
-                if (item.discount != nil) {
-                    Text(String(format: "%.2f", item.discount!).replacingOccurrences(of: "0.", with: "").appending("%"))
-                        .foregroundColor(Color.designColor.sale).font(.saleText())
+                
+                if let formattedDiscount = item.formattedDiscount {
+                    Text(formattedDiscount)
+                        .foregroundColor(Color.designColor.sale)
+                        .font(.saleText())
                 }
             }
         }
@@ -64,29 +70,38 @@ struct ListCardView: View {
                     .font(.caption())
                 Text("|")
                     .foregroundColor(Color.designColor.unitSelector)
-                if item.review != nil {
-                    Text(item.reviewString(for: item.review!))
-                        .font(.caption()).foregroundColor(Color.designColor.unitSelector)
+                if let review = item.review {
+                    Text(item.reviewString(for: review))
+                        .font(.caption())
+                        .foregroundColor(Color.designColor.unitSelector)
                 }
             }
             .padding(.top, 8)
+            
             Text(item.name)
-                .font(.caption()).foregroundColor(Color.designColor.itemName)
+                .font(.caption())
+                .foregroundColor(Color.designColor.itemName)
                 .padding(.horizontal, 4)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            if item.country != nil {
-                Text(item.country!.countryName.appending(item.country!.flag))
-                    .font(.caption()).foregroundColor(Color.designColor.unitSelector)
+            
+            if let country = item.country {
+                Text(country.rawValue.appending(country.flag))
+                    .font(.caption())
+                    .foregroundColor(Color.designColor.unitSelector)
                     .padding(.horizontal, 4)
                     .padding(.bottom, 44)
-                
             }
+            
             Spacer()
+            
             Group {
-                if selectedAmount != 0.0 {
-                    QuantitySelectorView(selectedAmount: $selectedAmount, selectedUnit: $selectedUnit, itemAmounts: item.units as! [ItemUnit], basePrice: item.priceWithDiscount,
+                if !selectedAmount.isZero {
+                    QuantitySelectorView(selectedAmount: $selectedAmount,
+                                         selectedUnit: $selectedUnit,
+                                         itemAmounts: item.units,
+                                         basePrice: item.priceWithDiscount,
                                          onPlusClick: {
                         onItemCartAdd(item.id, selectedUnit, selectedAmount)
                     },
@@ -126,6 +141,16 @@ struct ListCardView: View {
 
 struct ListCardView_Previews: PreviewProvider {
     static var previews: some View {
-        ListCardView(item: .init(name: "сыр Ламбер 500/0 230г", image: "FirstItemImage", price: 199.0, discount: 0.502, units: [.init(unit: "Шт", priceCoefficient: 2.5, addingCoefficient: 1), .init(unit: "Кг", priceCoefficient: 1, addingCoefficient: 0.1)], ratingNumber: "4.1", tag: .init(color: Color.designColor.saleTag, text: "Удар по ценам")), onItemCartAdd: {id,unit,amount in}, onItemCartDelete: {id in}, selectedUnit: nil)
+        ListCardView(item:
+                .init(name: "сыр Ламбер 500/0 230г",
+                      image: "FirstItemImage",
+                      price: 199.0,
+                      discount: 0.502,
+                      units: [.pcs, .kg],
+                      ratingNumber: "4.1",
+                      tag: .sale),
+                     selectedUnit: nil,
+                     onItemCartAdd: { _, _, _ in },
+                     onItemCartDelete: { _ in })
     }
 }

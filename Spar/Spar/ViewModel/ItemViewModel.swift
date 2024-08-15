@@ -8,62 +8,73 @@
 import Foundation
 import SwiftUI
 
-final class ItemsScreenViewModel: ObservableObject {
+protocol ItemsScreenViewModelProtocol: ObservableObject {
+    var items: [Item] { get }
+    var cartItems: [ItemCart] { get }
     
-    private var fetchDataService: FetchDataService
+    func onAppear()
+    func fetchMore(index: Int)
+    func addOrUpdateItemToCart(itemId: UUID, selectedUnit: ItemUnit, selectedCount: Double)
+    func deleteItemInCart(itemId: UUID)
+}
+
+final class ItemsScreenViewModel: ItemsScreenViewModelProtocol {
+    
     @Published var items: [Item] = []
     @Published var cartItems: [ItemCart] = []
     
-    init(fetchDataService: FetchDataService) {
+    private var fetchDataService: FetchDataServiceProtocol
+    
+    init(fetchDataService: FetchDataServiceProtocol) {
         self.fetchDataService = fetchDataService
+    }
+    
+    @MainActor
+    func onAppear() {
         Task {
-            try? await fetchData()
+            try await fetchData()
         }
     }
     
-    private func fetchData() async throws {
-        let fetchedData = await fetchDataService.fetch() as? [Item]
-        await MainActor.run {
-            items = fetchedData ?? []
-        }
-    }
-    
+    @MainActor
     func fetchMore(index: Int) {
         Task {
-            if index + 4 >= items.count {
-                let fetchedData = await fetchDataService.fetch() as? [Item]
-                if fetchedData != nil {
-                    await MainActor.run {
-                        items.append(contentsOf: fetchedData!)
-                    }
-                }
+            let fetchedData = await fetchDataService.fetch()
+            await MainActor.run {
+                items.append(contentsOf: fetchedData)
             }
+            
         }
     }
     
     @MainActor
     func addOrUpdateItemToCart(itemId: UUID, selectedUnit: ItemUnit, selectedCount: Double) {
-        let existItem = items.first(where: { item in
-            item.id == itemId})
-        if existItem == nil {
-            return
-        }
-        let existItemCartIndex = cartItems.firstIndex(where: { itemCart in
-            itemCart.id == itemId
-        })
-        if existItemCartIndex != nil {
-            cartItems.remove(at: existItemCartIndex!)
-        }
-        cartItems.append(.init(id: itemId, name: existItem!.name, priceWithDiscount: existItem!.priceWithDiscount, image: existItem!.image, selectedAmount: .init(selectedCount: selectedCount, selectedUnit: .init(unit: selectedUnit.unit, priceCoefficient: selectedUnit.priceCoefficient, addingCoefficient: selectedUnit.addingCoefficient))))
+        guard let existItem = items.first(where: { $0.id == itemId }) else { return }
+
+        cartItems.removeAll(where: { $0.id == itemId })
+
+        cartItems.append(
+            .init(id: itemId,
+                  name: existItem.name,
+                  priceWithDiscount: existItem.priceWithDiscount,
+                  image: existItem.image,
+                  selectedAmount: .init(count: selectedCount, unit: selectedUnit))
+        )
     }
     
     @MainActor
     func deleteItemInCart(itemId: UUID) {
-        let existItemCartIndex = cartItems.firstIndex(where: { itemCart in
-            itemCart.id == itemId
-        })
-        if existItemCartIndex != nil {
-            cartItems.remove(at: existItemCartIndex!)
+        guard let existItemCartIndex = cartItems.firstIndex(where: { $0.id == itemId }) else {
+            return
+        }
+        cartItems.remove(at: existItemCartIndex)
+    }
+    
+    private func fetchData() async throws {
+        let fetchedData = await fetchDataService.fetch()
+        await MainActor.run {
+            items = fetchedData
         }
     }
 }
+

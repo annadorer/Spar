@@ -7,15 +7,15 @@
 
 import Foundation
 
-struct ItemCart {
-    var id: UUID
-    var name: String
-    var priceWithDiscount: Double
-    var image: String
-    var selectedAmount: SelectedAmount
+struct ItemCart: Identifiable {
+    let id: UUID
+    let name: String
+    let priceWithDiscount: Double
+    let image: String
+    let selectedAmount: SelectedAmount
 }
 
 struct SelectedAmount {
-    var selectedCount: Double
-    var selectedUnit: ItemUnit
+    let count: Double
+    let unit: ItemUnit
 }

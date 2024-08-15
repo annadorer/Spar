@@ -11,7 +11,7 @@ extension Container {
     
     static let shared = Container()
     
-    static var fetchDataService: FetchDataService {
-        shared.resolve(FetchDataService.self)!
+    static var fetchDataService: FetchDataServiceProtocol {
+        shared.resolve(FetchDataServiceProtocol.self)!
     }
 }
