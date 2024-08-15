@@ -51,12 +51,12 @@ struct Item: Identifiable {
     
     func reviewString(for number: Int) -> String {
         let cases = [2, 3, 4]
-        if number % 10 == 1 && number % 100 != 11 {
-            return String(number).appending(UI.Strings.oneReview)
-        } else if cases.contains(number % 10) && !(number % 100 >= 12 && number % 100 <= 14) {
-            return String(number).appending(UI.Strings.twoReview)
+        if number == 1 {
+            return String(number).appending(" ").appending(UI.Strings.oneReview)
+        } else if cases.contains(number) {
+            return String(number).appending(" ").appending(UI.Strings.twoReview)
         } else {
-            return String(number).appending(UI.Strings.reviews)
+            return String(number).appending(" ").appending(UI.Strings.reviews)
         }
     }
 }
